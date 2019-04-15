@@ -2,6 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.security.MessageDigest;
@@ -12,14 +13,18 @@ public class JavaVC implements Serializable {
     private HashSet<String> stagedFiles;
     private HashSet<String> removedFiles;
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
+    private HashSet<String> IGNORED_FILES;
     public String BLOB_DIR = ".javavc/blobs";
+    private File cwd = new File(System.getProperty("user.dir"));
 
     public JavaVC() {
         HEAD = null;
         currentBranch = new Branch(HEAD, "master");
         stagedFiles = new HashSet<String>();
         removedFiles = new HashSet<String>();
+        IGNORED_FILES = new HashSet<String>();
         branchNameToBranchHeadCommit = new HashMap<String, Commit>();
+        Collections.addAll(IGNORED_FILES, ".javavc", ".idea", "src", "target", ".gitignore", "JavaVC.iml", "pom.xml", ".git");
     }
 
 
@@ -50,7 +55,6 @@ public class JavaVC implements Serializable {
         if (!blobDir.exists()) {
             blobDir.mkdirs();
         }
-        File cwd = new File(System.getProperty("user.dir"));
         File[] listOfFiles = cwd.listFiles();
         for (File f: listOfFiles) {
             if (f.getName().equals("test.txt")) {
@@ -112,7 +116,12 @@ public class JavaVC implements Serializable {
     }
 
     public void status() {
-
+        System.out.println("Files not staged for commit:");
+        for (File f: cwd.listFiles()) {
+            if (!IGNORED_FILES.contains(f.getName())) {
+                System.out.println(f.getName());
+            }
+        }
     }
 
     public void add() {

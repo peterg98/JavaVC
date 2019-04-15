@@ -7,6 +7,6 @@ import java.security.NoSuchAlgorithmException;
 public class Main {
     public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         JavaVC vc = new JavaVC();
-        vc.serializeAndWriteFile();
+        vc.status();
     }
 }
