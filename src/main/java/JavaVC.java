@@ -1,4 +1,6 @@
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,15 +55,22 @@ public class JavaVC implements Serializable {
         for (File f: listOfFiles) {
             if (f.getName().equals("test.txt")) {
                 try {
-                    FileOutputStream dir = new FileOutputStream(blobDir + "/" + generateBlobHash(f));
-                    ObjectOutputStream blob = new ObjectOutputStream(dir);
-                    blob.writeObject(f);
-                    blob.close();
+                    String hash = generateBlobHash(f);
+                    String path = ".javavc/blobs/" + hash;
+                    File blobDest = new File(path);
+                    if (!blobDest.exists()) {
+                        blobDest.mkdirs();
+                    }
+//                FileOutputStream dir = new FileOutputStream(blobDir + "/" + hash);
+//                ObjectOutputStream blob = new ObjectOutputStream(dir);
+//                blob.writeObject(f);
+//                blob.close();
+                    Files.copy(f.toPath(), (new File(path + "/" + f.getName())).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     System.out.println(e);
                 }
-
             }
+
         }
     }
 
