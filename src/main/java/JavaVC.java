@@ -79,22 +79,6 @@ public class JavaVC implements Serializable {
         }
     }
 
-    public void deserializeFile() {
-        File testDir = new File("test");
-        if (!testDir.exists()) {
-            testDir.mkdir();
-        }
-        try {
-            FileInputStream file = new FileInputStream(".javavc/blobs/e275b17196c721d12b9fb22c873f3452af24c");
-            ObjectInputStream in = new ObjectInputStream(file);
-            Object o = (Object)(in.readObject());
-            System.out.println(o);
-
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
     private String generateBlobHash(File f) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
