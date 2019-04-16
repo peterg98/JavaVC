@@ -2,6 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +18,7 @@ public class JavaVC implements Serializable {
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> IGNORED_FILES;
     public String BLOB_DIR = ".javavc/blobs";
-    private File cwd = new File(System.getProperty("user.dir"));
+    public static File cwd = new File(System.getProperty("user.dir"));
 
     public JavaVC() {
         HEAD = null;
@@ -122,8 +123,13 @@ public class JavaVC implements Serializable {
         if (arg.equals("-f")) {
             File f = new File(fileName);
             String hash = serializeAndWriteFile(f);
+            stagedFiles.put(f.getName(), hash);
         } else if (arg.equals(".")) {
-
+            for (File f: cwd.listFiles()) {
+                File fi = new File(f.getName());
+                String hash = serializeAndWriteFile(fi);
+                stagedFiles.put(f.getName(), hash);
+            }
         }
     }
 
@@ -183,8 +189,13 @@ public class JavaVC implements Serializable {
         }
     }
 
+    public void deserialize() {
+
+    }
+
     public static void main(String[] args) {
-        JavaVC vc = new JavaVC();
+        File file = new File(".javavc/JAVAVC.ser");
+        JavaVC vc = file.exists() ?
         vc.init();
     }
 }
