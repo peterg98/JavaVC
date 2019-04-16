@@ -7,6 +7,6 @@ import java.security.NoSuchAlgorithmException;
 public class Main {
     public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         JavaVC vc = new JavaVC();
-        vc.status();
+        Commit.deserializeCommit("6136cc92d46d59a3886efd3dcabe38a3a3c54cc5");
     }
 }

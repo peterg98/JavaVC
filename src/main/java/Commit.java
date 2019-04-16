@@ -1,4 +1,4 @@
-import java.io.Serializable;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,6 +8,8 @@ import java.security.MessageDigest;
 
 /* A commit. Each commit has a hash to the previous commit in the commit tree.*/
 public class Commit implements Serializable {
+    //Must provide a UID so that serializations can use different class definitions
+    private static final long serialVersionUID = 8474892334572341244L;
     private String commitHash;
     private Date date;
     private SimpleDateFormat format;
@@ -20,6 +22,7 @@ public class Commit implements Serializable {
     private HashSet<String> removedFiles;
     private HashSet<String> allFiles;
     private String hash;
+    private final static String COMMIT_LOCATION = ".javavc/commits";
 
 
     public Commit(Commit prevCommit, Branch branch, String commitMessage, HashSet<String> stagedFiles, HashSet<String> removedFiles) {
@@ -47,5 +50,35 @@ public class Commit implements Serializable {
             return "";
         }
     }
+
+    public void serializeCommit() {
+        File commitDir = new File(COMMIT_LOCATION);
+        if (!commitDir.exists()) {
+            commitDir.mkdirs();
+        }
+        String filePath = COMMIT_LOCATION + "/" + this.hash;
+        try {
+            FileOutputStream file = new FileOutputStream(filePath);
+            ObjectOutputStream serialized = new ObjectOutputStream(file);
+
+            serialized.writeObject(this);
+            serialized.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public static void deserializeCommit(String hash) {
+        String filePath = COMMIT_LOCATION + "/" + hash;
+        try {
+            FileInputStream file = new FileInputStream(filePath);
+            ObjectInputStream in = new ObjectInputStream(file);
+            Commit deserialized = (Commit)(in.readObject());
+            System.out.println(deserialized.commitHash);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
     public String getCommitHash() { return this.hash; }
 }
