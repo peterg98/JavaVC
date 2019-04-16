@@ -2,6 +2,7 @@ import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -16,19 +17,21 @@ public class Commit implements Serializable {
     private String formattedDate;
     private String commitMessage;
     private Commit prevCommit;
-    private Branch branch;
-    private HashSet<String> stagedFiles;
-    private HashSet<String> oldFiles;
-    private HashSet<String> removedFiles;
+    private String author;
+    private Commit globalPrevCommit;
+    private String branch;
+    private HashMap<String, String> stagedFiles;
+    private HashMap<String, String> removedFiles;
     private HashSet<String> allFiles;
     private String hash;
     private final static String COMMIT_LOCATION = ".javavc/commits";
 
 
-    public Commit(Commit prevCommit, Branch branch, String commitMessage, HashSet<String> stagedFiles, HashSet<String> removedFiles) {
+    public Commit(Commit prevCommit, String branch, String commitMessage, String author, HashMap<String, String> stagedFiles, HashMap<String, String> removedFiles) {
         this.prevCommit = prevCommit;
         this.branch = branch;
         this.commitMessage = commitMessage;
+        this.author = author;
         this.stagedFiles = stagedFiles;
         this.format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         this.date = new Date();
@@ -80,5 +83,17 @@ public class Commit implements Serializable {
         }
     }
 
+    public String getCommitBranch() {
+        return this.branch;
+    }
+
     public String getCommitHash() { return this.hash; }
+
+    public String getCommitAuthor() { return this.author; }
+
+    public String getCommitDate() { return this.formattedDate; }
+
+    public String getCommitMessage() { return this.commitMessage; }
+
+    public Commit getPrevCommit() { return this.prevCommit; }
 }

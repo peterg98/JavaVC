@@ -8,10 +8,12 @@ import java.util.HashSet;
 import java.security.MessageDigest;
 
 public class JavaVC implements Serializable {
+    private static final String author = "Peter Gang";
     private Commit HEAD;
-    private Branch currentBranch; //Current Branch of the HEAD commit
-    private HashSet<String> stagedFiles;
-    private HashSet<String> removedFiles;
+    private String currentBranch; //Current Branch of the HEAD commit
+    private HashMap<String, String> stagedFiles; //Files ready to be committed
+    private HashMap<String, String> removedFiles; //Files not present in the new staging area
+    private HashMap<String, String> allFiles; //File name -> hash mapping
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> IGNORED_FILES;
     public String BLOB_DIR = ".javavc/blobs";
@@ -19,11 +21,12 @@ public class JavaVC implements Serializable {
 
     public JavaVC() {
         HEAD = null;
-        currentBranch = new Branch(HEAD, "master");
-        stagedFiles = new HashSet<String>();
-        removedFiles = new HashSet<String>();
-        IGNORED_FILES = new HashSet<String>();
-        branchNameToBranchHeadCommit = new HashMap<String, Commit>();
+        currentBranch = "master";
+        stagedFiles = new HashMap<>();
+        removedFiles = new HashMap<>();
+        allFiles = new HashMap<>();
+        IGNORED_FILES = new HashSet<>();
+        branchNameToBranchHeadCommit = new HashMap<>();
         Collections.addAll(IGNORED_FILES, ".javavc", ".idea", "src", "target", ".gitignore", "JavaVC.iml", "pom.xml", ".git");
     }
 
@@ -34,7 +37,7 @@ public class JavaVC implements Serializable {
         File folder = new File (".javavc");
         if (!folder.exists()) {
             folder.mkdir();
-            this.currentBranch = new Branch(HEAD, "master");
+            this.currentBranch = "master";
             this.commit("Initial commit", true);
         } else {
             System.out.println("A javavc folder already exists inside this repository");
@@ -42,40 +45,33 @@ public class JavaVC implements Serializable {
     }
 
     public void commit(String commitMessage, boolean firstCommit) {
-        Commit commit = new Commit(HEAD, currentBranch, commitMessage, new HashSet<String>(stagedFiles), new HashSet<String>(removedFiles));
+        Commit commit = new Commit(HEAD, currentBranch, commitMessage, author, new HashMap<>(stagedFiles), new HashMap<>(removedFiles));
         String commitHash = commit.getCommitHash();
         commit.serializeCommit();
         HEAD = commit;
-        currentBranch.setBranchHead(commit);
-        branchNameToBranchHeadCommit.put(currentBranch.getBranchName(), commit);
+        stagedFiles = new HashMap<>();
+        removedFiles = new HashMap<>();
+        branchNameToBranchHeadCommit.put(currentBranch, commit);
 
     }
 
-    public void serializeAndWriteFile() {
+    public String serializeAndWriteFile(File f) {
         File blobDir = new File(BLOB_DIR);
         if (!blobDir.exists()) {
             blobDir.mkdirs();
         }
-        File[] listOfFiles = cwd.listFiles();
-        for (File f: listOfFiles) {
-            if (f.getName().equals("test.txt")) {
-                try {
-                    String hash = generateBlobHash(f);
-                    String path = ".javavc/blobs/" + hash;
-                    File blobDest = new File(path);
-                    if (!blobDest.exists()) {
-                        blobDest.mkdirs();
-                    }
-//                FileOutputStream dir = new FileOutputStream(blobDir + "/" + hash);
-//                ObjectOutputStream blob = new ObjectOutputStream(dir);
-//                blob.writeObject(f);
-//                blob.close();
-                    Files.copy(f.toPath(), (new File(path + "/" + f.getName())).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    System.out.println(e);
-                }
+        try {
+            String hash = generateBlobHash(f);
+            String path = ".javavc/blobs/" + hash;
+            File blobDest = new File(path);
+            if (!blobDest.exists()) {
+                blobDest.mkdirs();
             }
-
+            Files.copy(f.toPath(), (new File(path + "/" + f.getName())).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return hash;
+        } catch (IOException e) {
+            System.out.println(e);
+            return "";
         }
     }
 
@@ -95,26 +91,62 @@ public class JavaVC implements Serializable {
             return convertToHex(SHA1, false);
 
         } catch (Exception e) {
-            System.out.println("Error during loading file or unknown hashing algorithm.");
+            System.out.println(e);
             return "";
         }
     }
 
     public void status() {
-        System.out.println("Files not staged for commit:");
-        for (File f: cwd.listFiles()) {
-            if (!IGNORED_FILES.contains(f.getName())) {
-                System.out.println(f.getName());
+        System.out.println("Files staged for commit:");
+        for (String key: stagedFiles.keySet()) {
+            System.out.printf("\t%s\n", key);
+        }
+        System.out.print("\n================================\n");
+        System.out.println("Changes not staged for commit:");
+        if (cwd.listFiles() != null) {
+            for (File f: cwd.listFiles()) {
+                if (!IGNORED_FILES.contains(f.getName())) {
+                    System.out.printf("\t%s\n", f.getName());
+                }
             }
+        }
+        System.out.print("\n================================\n");
+        System.out.println("Removed Files:");
+        for (String s: removedFiles.keySet()) {
+            System.out.printf("\t%s\n", s);
+        }
+
+    }
+
+    public void add(String arg, String fileName) {
+        if (arg.equals("-f")) {
+            File f = new File(fileName);
+            String hash = serializeAndWriteFile(f);
+        } else if (arg.equals(".")) {
+
         }
     }
 
-    public void add() {
-
+    public void log() {
+        Commit h = HEAD;
+        while (h != null) {
+            System.out.println("commit " + h.getCommitHash());
+            System.out.println("Author: " + h.getCommitAuthor());
+            System.out.println("Date: " + h.getCommitDate());
+            System.out.printf("\n\n\t%s\n\n", h.getCommitMessage());
+            h = h.getPrevCommit();
+        }
     }
 
-    public void log() {
-
+    public void checkout(String flag, String name) {
+        if (flag.equals("-b")) {
+            if (!branchNameToBranchHeadCommit.containsKey(name)) {
+                branchNameToBranchHeadCommit.put(name, HEAD);
+            } else {
+                currentBranch = name;
+                HEAD = branchNameToBranchHeadCommit.get(currentBranch);
+            }
+        }
     }
 
     public static String convertToHex(byte[] bytearray, boolean isCommit) {
@@ -134,7 +166,24 @@ public class JavaVC implements Serializable {
         return hash.toString();
     }
 
-    public static void main(String[] args) throws NoSuchAlgorithmException {
+    public void serializeStatus() {
+        File dir = new File(".javavc");
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        String filePath = dir + "/" + "JAVAVC.ser";
+        try {
+            FileOutputStream file = new FileOutputStream(filePath);
+            ObjectOutputStream serialized = new ObjectOutputStream(file);
+            serialized.writeObject(this);
+            serialized.close();
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public static void main(String[] args) {
         JavaVC vc = new JavaVC();
         vc.init();
     }
