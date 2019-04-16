@@ -30,7 +30,7 @@ public class JavaVC implements Serializable {
 
     /* Initialization of the .javavc repository. This is where all the
     * snapshots of file contents and commits will go to.*/
-    private void init() {
+    public void init() {
         File folder = new File (".javavc");
         if (!folder.exists()) {
             folder.mkdir();
@@ -41,9 +41,10 @@ public class JavaVC implements Serializable {
         }
     }
 
-    private void commit(String commitMessage, boolean firstCommit) {
+    public void commit(String commitMessage, boolean firstCommit) {
         Commit commit = new Commit(HEAD, currentBranch, commitMessage, new HashSet<String>(stagedFiles), new HashSet<String>(removedFiles));
         String commitHash = commit.getCommitHash();
+        commit.serializeCommit();
         HEAD = commit;
         currentBranch.setBranchHead(commit);
         branchNameToBranchHeadCommit.put(currentBranch.getBranchName(), commit);
