@@ -12,6 +12,7 @@ public class JavaVC implements Serializable {
     private static final String author = "Peter Gang";
     private Commit HEAD;
     private String currentBranch; //Current Branch of the HEAD commit
+    private Commit globalPrevCommit;
     private HashMap<String, String> stagedFiles; //Files ready to be committed
     private HashMap<String, String> removedFiles; //Files not present in the new staging area
     private HashMap<String, String> allFiles; //File name -> hash mapping
@@ -22,6 +23,7 @@ public class JavaVC implements Serializable {
 
     public JavaVC() {
         HEAD = null;
+        globalPrevCommit = null;
         currentBranch = "master";
         stagedFiles = new HashMap<>();
         removedFiles = new HashMap<>();
@@ -39,14 +41,15 @@ public class JavaVC implements Serializable {
         if (!folder.exists()) {
             folder.mkdir();
             this.currentBranch = "master";
-            this.commit("Initial commit", true);
+            branchNameToBranchHeadCommit.put("master", HEAD);
+            this.commit("Initial commit");
         } else {
             System.out.println("A javavc folder already exists inside this repository");
         }
     }
 
-    public void commit(String commitMessage, boolean firstCommit) {
-        Commit commit = new Commit(HEAD, currentBranch, commitMessage, author, new HashMap<>(stagedFiles), new HashMap<>(removedFiles));
+    public void commit(String commitMessage) {
+        Commit commit = new Commit(branchNameToBranchHeadCommit.get(currentBranch), HEAD, currentBranch, commitMessage, author, new HashMap<>(stagedFiles), new HashMap<>(removedFiles));
         String commitHash = commit.getCommitHash();
         commit.serializeCommit();
         HEAD = commit;
@@ -98,6 +101,11 @@ public class JavaVC implements Serializable {
     }
 
     public void status() {
+        System.out.println("Branches:\n");
+        for (String b: branchNameToBranchHeadCommit.keySet()) {
+            if (b.equals(currentBranch)) System.out.print("*");
+            System.out.println(b);
+        }
         System.out.println("\nFiles staged for commit:\n");
         for (String key: stagedFiles.keySet()) {
             System.out.printf("\t%s\n", key);
@@ -147,7 +155,7 @@ public class JavaVC implements Serializable {
             System.out.println("Author: " + h.getCommitAuthor());
             System.out.println("Date: " + h.getCommitDate());
             System.out.printf("\n\n\t%s\n\n", h.getCommitMessage());
-            h = h.getPrevCommit();
+            h = h.getGlobalPrevCommit();
         }
     }
 
@@ -214,8 +222,7 @@ public class JavaVC implements Serializable {
     public static void main(String[] args) {
         File file = new File(".javavc/JAVAVC.ser");
         JavaVC vc = file.exists() ? deserialize() : new JavaVC();
-        vc.add("-f", "test.txt");
-        vc.status();
+        vc.log();
         vc.serializeStatus();
     }
 }
