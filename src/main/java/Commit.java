@@ -27,8 +27,9 @@ public class Commit implements Serializable {
     private final static String COMMIT_LOCATION = ".javavc/commits";
 
 
-    public Commit(Commit prevCommit, String branch, String commitMessage, String author, HashMap<String, String> stagedFiles, HashMap<String, String> removedFiles) {
+    public Commit(Commit prevCommit, Commit globalPrevCommit, String branch, String commitMessage, String author, HashMap<String, String> stagedFiles, HashMap<String, String> removedFiles) {
         this.prevCommit = prevCommit;
+        this.globalPrevCommit = globalPrevCommit;
         this.branch = branch;
         this.commitMessage = commitMessage;
         this.author = author;
@@ -98,4 +99,6 @@ public class Commit implements Serializable {
     public String getCommitMessage() { return this.commitMessage; }
 
     public Commit getPrevCommit() { return this.prevCommit; }
+
+    public Commit getGlobalPrevCommit() { return this.globalPrevCommit; }
 }
