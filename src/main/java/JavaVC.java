@@ -14,7 +14,7 @@ public class JavaVC implements Serializable {
     private String currentBranch; //Current Branch of the HEAD commit
     private Commit globalPrevCommit;
     private HashMap<String, String> stagedFiles; //Files ready to be committed
-    private HashMap<String, String> removedFiles; //Files not present in the new staging area
+    private HashSet<String> removedFiles; //Files not present in the new staging area
     private HashMap<String, String> allFiles; //File name -> hash mapping
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> IGNORED_FILES;
@@ -26,7 +26,7 @@ public class JavaVC implements Serializable {
         globalPrevCommit = null;
         currentBranch = "master";
         stagedFiles = new HashMap<>();
-        removedFiles = new HashMap<>();
+        removedFiles = new HashSet<>();
         allFiles = new HashMap<>();
         IGNORED_FILES = new HashSet<>();
         branchNameToBranchHeadCommit = new HashMap<>();
@@ -49,12 +49,12 @@ public class JavaVC implements Serializable {
     }
 
     public void commit(String commitMessage) {
-        Commit commit = new Commit(branchNameToBranchHeadCommit.get(currentBranch), HEAD, currentBranch, commitMessage, author, new HashMap<>(stagedFiles), new HashMap<>(removedFiles));
+        Commit commit = new Commit(branchNameToBranchHeadCommit.get(currentBranch), HEAD, currentBranch, commitMessage, author, new HashMap<>(stagedFiles), new HashSet<>(removedFiles));
         String commitHash = commit.getCommitHash();
         commit.serializeCommit();
         HEAD = commit;
         stagedFiles = new HashMap<>();
-        removedFiles = new HashMap<>();
+        removedFiles = new HashSet<>();
         branchNameToBranchHeadCommit.put(currentBranch, commit);
 
     }
@@ -118,7 +118,7 @@ public class JavaVC implements Serializable {
         }
 
         System.out.println("\nRemoved Files:\n");
-        for (String s: removedFiles.keySet()) {
+        for (String s: removedFiles) {
             System.out.printf("\t%s\n", s);
         }
 
@@ -140,7 +140,7 @@ public class JavaVC implements Serializable {
 
     public void rm(String fileName) {
         if (stagedFiles.containsKey(fileName)) {
-            removedFiles.put(fileName, stagedFiles.get(fileName));
+            removedFiles.add(fileName);
             File file = new File(fileName);
             file.delete();
         } else {
@@ -174,7 +174,7 @@ public class JavaVC implements Serializable {
         StringBuffer hash = new StringBuffer();
         for (int i = 0; i < bytearray.length; i++) {
             //By default, Java's bytes are signed. Mask out all negative bits and
-            //trim digits after 255 by a bitwise AND operation with 255.
+            //trim digits after 255 by a bitwise AND operation with hexadecimal 255.
             String hex = Integer.toHexString(bytearray[i] & 0xff);
             //For hashing commits, make it easily recognizable (from branches and blobs)
             // by prepending a c to the beginning of the hash.
@@ -222,7 +222,7 @@ public class JavaVC implements Serializable {
     public static void main(String[] args) {
         File file = new File(".javavc/JAVAVC.ser");
         JavaVC vc = file.exists() ? deserialize() : new JavaVC();
-        vc.log();
+        vc.status();
         vc.serializeStatus();
     }
 }

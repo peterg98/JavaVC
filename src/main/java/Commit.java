@@ -21,13 +21,13 @@ public class Commit implements Serializable {
     private Commit globalPrevCommit;
     private String branch;
     private HashMap<String, String> stagedFiles;
-    private HashMap<String, String> removedFiles;
+    private HashSet<String> removedFiles;
     private HashSet<String> allFiles;
     private String hash;
     private final static String COMMIT_LOCATION = ".javavc/commits";
 
 
-    public Commit(Commit prevCommit, Commit globalPrevCommit, String branch, String commitMessage, String author, HashMap<String, String> stagedFiles, HashMap<String, String> removedFiles) {
+    public Commit(Commit prevCommit, Commit globalPrevCommit, String branch, String commitMessage, String author, HashMap<String, String> stagedFiles, HashSet<String> removedFiles) {
         this.prevCommit = prevCommit;
         this.globalPrevCommit = globalPrevCommit;
         this.branch = branch;
