@@ -77,6 +77,8 @@ public class Commit implements Serializable {
             FileInputStream file = new FileInputStream(filePath);
             ObjectInputStream in = new ObjectInputStream(file);
             Commit deserialized = (Commit)(in.readObject());
+            file.close();
+            in.close();
             System.out.println(deserialized.prevCommit);
         } catch (Exception e) {
             System.out.println(e);

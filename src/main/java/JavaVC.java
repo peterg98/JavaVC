@@ -98,21 +98,18 @@ public class JavaVC implements Serializable {
     }
 
     public void status() {
-        System.out.println("Files staged for commit:");
+        System.out.println("\nFiles staged for commit:\n");
         for (String key: stagedFiles.keySet()) {
             System.out.printf("\t%s\n", key);
         }
-        System.out.print("\n================================\n");
-        System.out.println("Changes not staged for commit:");
-        if (cwd.listFiles() != null) {
-            for (File f: cwd.listFiles()) {
-                if (!IGNORED_FILES.contains(f.getName())) {
-                    System.out.printf("\t%s\n", f.getName());
-                }
+        System.out.println("\nFiles not staged for commit \n");
+        for (File f: cwd.listFiles()) {
+            if (!IGNORED_FILES.contains(f.getName()) && !stagedFiles.containsKey(f.getName())) {
+                System.out.printf("\t%s\n", f.getName());
             }
         }
-        System.out.print("\n================================\n");
-        System.out.println("Removed Files:");
+
+        System.out.println("\nRemoved Files:\n");
         for (String s: removedFiles.keySet()) {
             System.out.printf("\t%s\n", s);
         }
@@ -130,6 +127,16 @@ public class JavaVC implements Serializable {
                 String hash = serializeAndWriteFile(fi);
                 stagedFiles.put(f.getName(), hash);
             }
+        }
+    }
+
+    public void rm(String fileName) {
+        if (stagedFiles.containsKey(fileName)) {
+            removedFiles.put(fileName, stagedFiles.get(fileName));
+            File file = new File(fileName);
+            file.delete();
+        } else {
+            System.out.println("File does not exist or is not in the staging area");
         }
     }
 
@@ -189,13 +196,26 @@ public class JavaVC implements Serializable {
         }
     }
 
-    public void deserialize() {
-
+    public static JavaVC deserialize() {
+        String pathToSerial = ".javavc/JAVAVC.ser";
+        try {
+            FileInputStream file = new FileInputStream(pathToSerial);
+            ObjectInputStream in = new ObjectInputStream(file);
+            JavaVC deserialized = (JavaVC)(in.readObject());
+            file.close();
+            in.close();
+            return deserialized;
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
     }
 
     public static void main(String[] args) {
         File file = new File(".javavc/JAVAVC.ser");
-        JavaVC vc = file.exists() ?
-        vc.init();
+        JavaVC vc = file.exists() ? deserialize() : new JavaVC();
+        vc.add("-f", "test.txt");
+        vc.status();
+        vc.serializeStatus();
     }
 }
