@@ -80,7 +80,6 @@ public class Commit implements Serializable {
             Commit deserialized = (Commit)(in.readObject());
             file.close();
             in.close();
-            System.out.println(deserialized.prevCommit);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -101,4 +100,8 @@ public class Commit implements Serializable {
     public Commit getPrevCommit() { return this.prevCommit; }
 
     public Commit getGlobalPrevCommit() { return this.globalPrevCommit; }
+
+    public HashMap<String, String> getStagedFiles() { return this.stagedFiles; }
+
+    public HashSet<String> getRemovedFiles() { return this.removedFiles; }
 }
