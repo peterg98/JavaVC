@@ -72,7 +72,7 @@ public class Commit implements Serializable {
         }
     }
 
-    public static void deserializeCommit(String hash) {
+    public static Commit deserializeCommit(String hash) {
         String filePath = COMMIT_LOCATION + "/" + hash;
         try {
             FileInputStream file = new FileInputStream(filePath);
@@ -80,8 +80,10 @@ public class Commit implements Serializable {
             Commit deserialized = (Commit)(in.readObject());
             file.close();
             in.close();
+            return deserialized;
         } catch (Exception e) {
             System.out.println(e);
+            return null;
         }
     }
 
