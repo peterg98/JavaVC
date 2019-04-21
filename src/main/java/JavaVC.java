@@ -196,14 +196,7 @@ public class JavaVC implements Serializable {
                     System.out.println("Commit at " + commitID + " does not exist");
                     return;
                 }
-                try {
-                    file = new FileInputStream(f.toString());
-                    in = new ObjectInputStream(file);
-                    c = (Commit)(in.readObject());
-                } catch (Exception e) {
-                    System.out.println("Error when reading object");
-                    return;
-                }
+                c = Commit.deserializeCommit(f.toString());
 
             } else { c = HEAD; }
             try {
@@ -306,8 +299,9 @@ public class JavaVC implements Serializable {
 //        vc.commit("Adding files to master", false);
 //        vc.add(".", null);
 //        vc.commit("Adding more files to master", false);
-        vc.checkout("", "", "master", "");
-        vc.log("");
+//        vc.checkout("", "", "master", "");
+
+        vc.log("--global");
 
         vc.serializeStatus();
     }
