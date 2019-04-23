@@ -264,11 +264,6 @@ public class JavaVC implements Serializable {
             //By default, Java's bytes are signed. Mask out all negative bits and
             //trim digits after 255 by a bitwise AND operation with hexadecimal 255.
             String hex = Integer.toHexString(bytearray[i] & 0xff);
-            //For hashing commits, make it easily recognizable (from branches and blobs)
-            // by prepending a c to the beginning of the hash.
-            if (isCommit && hex.length() == 1) {
-                hash.append('c');
-            }
             hash.append(hex);
         }
         return hash.toString();
