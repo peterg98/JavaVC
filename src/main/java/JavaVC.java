@@ -1,5 +1,6 @@
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -226,13 +227,31 @@ public class JavaVC implements Serializable {
             System.out.println("The commit at " + commitHash + " does not exist.");
             return;
         }
-        while (!HEAD.getCommitHash().equals(commitHash)) {
-            branchNameToBranchHeadCommit.put(HEAD.getCommitBranch(), HEAD.getPrevCommit());
-            HEAD = HEAD.getGlobalPrevCommit();
+        while (!latestCommit.getCommitHash().equals(commitHash)) {
+            branchNameToBranchHeadCommit.put(latestCommit.getCommitBranch(), latestCommit.getPrevCommit());
+            latestCommit = latestCommit.getGlobalPrevCommit();
         }
-        currentBranch = HEAD.getCommitBranch();
-        stagedFiles = HEAD.getStagedFiles();
-        removedFiles = HEAD.getRemovedFiles();
+        currentBranch = latestCommit.getCommitBranch();
+        stagedFiles = latestCommit.getStagedFiles();
+        removedFiles = latestCommit.getRemovedFiles();
+        HEAD = latestCommit;
+        //For testing purposes: ignores all files except .txt
+        for (File f: cwd.listFiles()) {
+            if (isAllowedFile(f.getName())) {
+                f.delete();
+            }
+        }
+        for (String file: stagedFiles.keySet()) {
+            File fileDir = new File(".javavc/blobs/" + stagedFiles.get(file));
+            for (File f: fileDir.listFiles()) {
+                try {
+                    Files.copy(f.toPath(), Paths.get(f.getName()), StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    System.out.println(e);
+                    return;
+                }
+            }
+        }
     }
 
     private void merge() {
@@ -300,7 +319,11 @@ public class JavaVC implements Serializable {
 //        vc.add(".", null);
 //        vc.commit("Adding more files to master", false);
 //        vc.checkout("", "", "master", "");
-
+//        vc.add(".", null);
+//        vc.commit("Modified test.txt", false);
+//        vc.add(".", null);
+//        vc.commit("Modified test.txt again", false);
+        vc.reset("331ffe45907fcea3d33019611ac6c8b4ee9f1a5a");
         vc.log("--global");
 
         vc.serializeStatus();
