@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.security.MessageDigest;
 
 public class JavaVC implements Serializable {
+    private static final long serialVersionUID = 3694871046173950176L;
     private static final String author = "Peter Gang";
     private Commit HEAD;
     private Commit latestCommit;
@@ -177,12 +178,17 @@ public class JavaVC implements Serializable {
 
     }
 
+    /*checkout has three different usages:
+    * checkout -b branchName
+    * checkout branchName
+    * checkout -c commitID fileName
+    * checkout fileName*/
     public void checkout(String arg, String commitID, String branchName, String fileName) {
         FileInputStream file;
         ObjectInputStream in;
         Commit c;
         File path;
-        if (arg.equals("-b")) {
+        if (arg.equals("-b")) { //checkout -b branchName
             if (!branchNameToBranchHeadCommit.containsKey(branchName)) {
                 branchNameToBranchHeadCommit.put(branchName, HEAD);
                 currentBranch = branchName;
@@ -191,7 +197,7 @@ public class JavaVC implements Serializable {
             }
         } else if (!fileName.equals("") && !branchName.equals("")) {
             File f;
-            if (arg.equals("-c")) {
+            if (arg.equals("-c")) { //checkout -c commitID fileName
                 f = new File(".javavc/commits/" + commitID);
                 if (!f.exists()) {
                     System.out.println("Commit at " + commitID + " does not exist");
@@ -199,7 +205,7 @@ public class JavaVC implements Serializable {
                 }
                 c = Commit.deserializeCommit(f.toString());
 
-            } else { c = HEAD; }
+            } else { c = HEAD; } //checkout fileName
             try {
                 found : {
                     for (String fName : c.getStagedFiles().keySet()) {
@@ -215,7 +221,7 @@ public class JavaVC implements Serializable {
             } catch (Exception e) {
                 System.out.println(e);
             }
-        } else {
+        } else { //checkout branchName
             currentBranch = branchName;
             HEAD = branchNameToBranchHeadCommit.get(currentBranch);
         }
@@ -318,7 +324,6 @@ public class JavaVC implements Serializable {
 //        vc.commit("Modified test.txt", false);
 //        vc.add(".", null);
 //        vc.commit("Modified test.txt again", false);
-        vc.reset("331ffe45907fcea3d33019611ac6c8b4ee9f1a5a");
         vc.log("--global");
 
         vc.serializeStatus();
