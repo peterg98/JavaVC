@@ -16,7 +16,6 @@ public class JavaVC implements Serializable {
     private HashSet<String> removedFiles; //Files not present in the new staging area
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> ALLOWED_SUFFIXES;
-    public String BLOB_DIR = ".javavc/blobs";
     public static File cwd = new File(System.getProperty("user.dir"));
 
     public JavaVC() {
@@ -63,7 +62,7 @@ public class JavaVC implements Serializable {
     }
 
     public String serializeAndWriteFile(File f) {
-        File blobDir = new File(BLOB_DIR);
+        File blobDir = new File(".javavc/blobs");
         if (!blobDir.exists()) {
             blobDir.mkdirs();
         }
