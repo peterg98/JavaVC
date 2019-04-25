@@ -194,7 +194,7 @@ public class JavaVC implements Serializable {
             } else {
                 System.out.println("The branch at " + branchName + " already exists.");
             }
-        } else if (!fileName.equals("") && !branchName.equals("")) {
+        } else if (!fileName.equals("") && branchName.equals("")) {
             File f;
             if (arg.equals("-c")) { //checkout -c commitID fileName
                 f = new File(".javavc/commits/" + commitID);
@@ -202,9 +202,8 @@ public class JavaVC implements Serializable {
                     System.out.println("Commit at " + commitID + " does not exist");
                     return;
                 }
-                c = Commit.deserializeCommit(f.toString());
-
-            } else { c = HEAD; } //checkout fileName
+                c = Commit.deserializeCommit(commitID);
+            } else { c = HEAD; } //checkout fileName TODO
             try {
                 found : {
                     for (String fName : c.getStagedFiles().keySet()) {
@@ -321,9 +320,8 @@ public class JavaVC implements Serializable {
 //        vc.checkout("", "", "master", "");
 //        vc.add(".", null);
 //        vc.commit("Modified test.txt", false);
-//        vc.add(".", null);
-//        vc.commit("Modified test.txt again", false);
-        vc.log("--global");
+//        vc.log("--global");
+        vc.checkout("", "", "", "test.txt");
 
         vc.serializeStatus();
     }
