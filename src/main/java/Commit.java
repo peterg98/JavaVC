@@ -87,9 +87,7 @@ public class Commit implements Serializable {
         }
     }
 
-    public String getCommitBranch() {
-        return this.branch;
-    }
+    public String getCommitBranch() { return this.branch; }
 
     public String getCommitHash() { return this.hash; }
 
