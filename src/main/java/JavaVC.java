@@ -233,6 +233,21 @@ public class JavaVC implements Serializable {
         currentBranch = HEAD.getCommitBranch();
         stagedFiles = HEAD.getStagedFiles();
         removedFiles = HEAD.getRemovedFiles();
+        for (File f: cwd.listFiles()) {
+            if (isAllowedFile(f.getName())) {
+                f.delete();
+            }
+        }
+        for (String fileHash: stagedFiles.values()) {
+            File dir = new File(".javavc/blobs/" + fileHash);
+            for (File f: dir.listFiles()) {
+                try {
+                    Files.copy(f.toPath(), new File(f.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            }
+        }
     }
 
     private void merge() {
@@ -300,9 +315,7 @@ public class JavaVC implements Serializable {
 //        vc.add(".", null);
 //        vc.commit("Adding more files to master", false);
 //        vc.checkout("", "", "master", "");
-
-        vc.log("--global");
-
+        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
         vc.serializeStatus();
     }
 }
