@@ -4,6 +4,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.security.MessageDigest;
+import java.util.Arrays;
 
 public class JavaVC implements Serializable {
     private static final String author = "Peter Gang";
@@ -185,7 +186,7 @@ public class JavaVC implements Serializable {
         ObjectInputStream in;
         Commit c;
         File path;
-        if (arg.equals("-b")) {
+        if (arg.equals("-b")) { //checkout -b branchName
             if (!branchNameToBranchHeadCommit.containsKey(branchName)) {
                 branchNameToBranchHeadCommit.put(branchName, HEAD);
                 currentBranch = branchName;
@@ -194,7 +195,7 @@ public class JavaVC implements Serializable {
             }
         } else if (!fileName.equals("") && branchName.equals("")) {
             File f;
-            if (arg.equals("-c")) {
+            if (arg.equals("-c")) { //checkout -c commitID fileName
                 f = new File(".javavc/commits/" + commitID);
                 if (!f.exists()) {
                     System.out.println("Commit at " + commitID + " does not exist");
@@ -202,7 +203,7 @@ public class JavaVC implements Serializable {
                 }
                 c = Commit.deserializeCommit(commitID);
 
-            } else { c = HEAD; }
+            } else { c = HEAD; } //checkout -c fileName
             try {
                 found : {
                     for (String fName : c.getStagedFiles().keySet()) {
@@ -218,7 +219,7 @@ public class JavaVC implements Serializable {
             } catch (Exception e) {
                 System.out.println(e);
             }
-        } else {
+        } else { //checkout branchName
             currentBranch = branchName;
             HEAD = branchNameToBranchHeadCommit.get(currentBranch);
         }
@@ -320,25 +321,24 @@ public class JavaVC implements Serializable {
 //        vc.commit("Adding more files to master", false);
 //        vc.checkout("", "", "master", "");
 //        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
-        vc.checkout("-c", "fffc6e9a5b73db7fe1d82f6ca6608e1de9d9a220", "", "asdf.txt");
-        vc.log("--global");
         switch (args[0]) {
             case "init":
                 vc.init();
                 break;
             case "add":
-                if (!(args.length < 2)) {
-                    System.out.println("No arguments provided to add");
+                if (args.length >= 2) {
                     if (args[1].equals(".")) vc.add(".", null);
                     else if (args[1].equals("-f")) {
                         if (args.length == 3) vc.add("-f", args[2]);
                         else System.out.println("add -f requires one argument filename");
                     }
-                }
+                } else System.out.println("add requires arguments");
+
+
                 break;
             case "commit":
-                if (args.length >= 2) vc.commit(args[1], false);
-                else System.out.println("No arguments provided to commit");
+                if (args.length == 3 && args[1].equals("-m")) vc.commit(args[2], false);
+                else System.out.println("Invalid arguments provided for commit");
                 break;
             case "rm":
                 if (args.length >= 2) vc.rm(args[1]);
@@ -358,11 +358,22 @@ public class JavaVC implements Serializable {
                 break;
             /*Usage:
             * checkout --fileName
-            * checkout commitHash --filename
+            * checkout -c commitHash --filename
             * checkout -b branchName
             * checkout branchName*/
             case "checkout":
                 if (args.length < 2) System.out.println("checkout requires at least 1 argument");
+                if (args.length == 2) {
+                    if (args[1].startsWith("--")) {
+                        vc.checkout("", "", "", args[1]);
+                    } else {
+                        vc.checkout("", "", args[1], "");
+                    }
+                } else if (args.length == 3) {
+                    vc.checkout(args[1], "", args[2], "");
+                } else if (args.length == 4 && args[1].equals("-c") && args[3].startsWith("--")) {
+                    vc.checkout(args[1], args[2], "", args[3]);
+                }
         }
         vc.serializeStatus();
     }
