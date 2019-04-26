@@ -45,6 +45,10 @@ public class JavaVC implements Serializable {
 
     /* Equivalent of git commit: takes all the files from the staging area and serializes the Commit. */
     private void commit(String commitMessage, boolean isFirst) {
+        if (commitMessage.equals("")) {
+            System.out.println("Commit Message is empty.");
+            return;
+        }
         if (stagedFiles.isEmpty() && removedFiles.isEmpty() && !isFirst) {
             System.out.println("No changes made. Aborting");
             return;
@@ -318,20 +322,48 @@ public class JavaVC implements Serializable {
 //        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
         vc.checkout("-c", "fffc6e9a5b73db7fe1d82f6ca6608e1de9d9a220", "", "asdf.txt");
         vc.log("--global");
-//        switch (args[0]) {
-//            case "init":
-//                vc.init();
-//                break;
-//            case "add":
-//                if (args[1].equals("-f")) vc.add("-f", args[2]);
-//                else if (args[1].equals(".")) vc.add(".", null);
-//                else {
-//                    System.out.println("Invalid set of arguments for add");
-//                }
-//                break;
-//            case "commit":
-//                if (args[1].equals())
-//        }
+        switch (args[0]) {
+            case "init":
+                vc.init();
+                break;
+            case "add":
+                if (!(args.length < 2)) {
+                    System.out.println("No arguments provided to add");
+                    if (args[1].equals(".")) vc.add(".", null);
+                    else if (args[1].equals("-f")) {
+                        if (args.length == 3) vc.add("-f", args[2]);
+                        else System.out.println("add -f requires one argument filename");
+                    }
+                }
+                break;
+            case "commit":
+                if (args.length >= 2) vc.commit(args[1], false);
+                else System.out.println("No arguments provided to commit");
+                break;
+            case "rm":
+                if (args.length >= 2) vc.rm(args[1]);
+                else System.out.println("No arguments provided to rm");
+                break;
+            case "status":
+                vc.status();
+                break;
+            case "reset":
+                if (args.length < 2) System.out.println("reset requires one argument commitHash");
+                vc.reset(args[1]);
+                break;
+            case "log":
+                if (args.length == 1) vc.log("");
+                else if (args.length == 2 && args[1].equals("--global")) vc.log("--global");
+                else System.out.println("Invalid arguments supplied to log");
+                break;
+            /*Usage:
+            * checkout --fileName
+            * checkout commitHash --filename
+            * checkout -b branchName
+            * checkout branchName*/
+            case "checkout":
+                if (args.length < 2) System.out.println("checkout requires at least 1 argument");
+        }
         vc.serializeStatus();
     }
 }
