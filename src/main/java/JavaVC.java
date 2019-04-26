@@ -188,7 +188,7 @@ public class JavaVC implements Serializable {
             } else {
                 System.out.println("The branch at " + branchName + " already exists.");
             }
-        } else if (!fileName.equals("") && !branchName.equals("")) {
+        } else if (!fileName.equals("") && branchName.equals("")) {
             File f;
             if (arg.equals("-c")) {
                 f = new File(".javavc/commits/" + commitID);
@@ -196,7 +196,7 @@ public class JavaVC implements Serializable {
                     System.out.println("Commit at " + commitID + " does not exist");
                     return;
                 }
-                c = Commit.deserializeCommit(f.toString());
+                c = Commit.deserializeCommit(commitID);
 
             } else { c = HEAD; }
             try {
@@ -315,7 +315,23 @@ public class JavaVC implements Serializable {
 //        vc.add(".", null);
 //        vc.commit("Adding more files to master", false);
 //        vc.checkout("", "", "master", "");
-        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
+//        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
+        vc.checkout("-c", "fffc6e9a5b73db7fe1d82f6ca6608e1de9d9a220", "", "asdf.txt");
+        vc.log("--global");
+//        switch (args[0]) {
+//            case "init":
+//                vc.init();
+//                break;
+//            case "add":
+//                if (args[1].equals("-f")) vc.add("-f", args[2]);
+//                else if (args[1].equals(".")) vc.add(".", null);
+//                else {
+//                    System.out.println("Invalid set of arguments for add");
+//                }
+//                break;
+//            case "commit":
+//                if (args[1].equals())
+//        }
         vc.serializeStatus();
     }
 }
