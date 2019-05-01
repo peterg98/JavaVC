@@ -221,6 +221,14 @@ public class JavaVC implements Serializable {
         } else { //checkout branchName NEEDS FIXING: UPDATE FILES IN CURRENT WORKING DIRECTORY
             currentBranch = branchName;
             HEAD = branchNameToBranchHeadCommit.get(currentBranch);
+            for (File f: cwd.listFiles()) {
+                if (isAllowedFile(f.getName())) {
+                    f.delete();
+                }
+            }
+            for (String fileHash: HEAD.getStagedFiles().values()) { //TO FIX
+
+            }
         }
     }
 
