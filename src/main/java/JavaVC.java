@@ -203,7 +203,6 @@ public class JavaVC implements Serializable {
 
             } else { c = HEAD; } //checkout --fileName
             try {
-                System.out.println(c.getCommitHash());
                 found : {
                     for (String fName : c.getStagedFiles().keySet()) {
                         if (fName.equals(fileName)) {
@@ -219,16 +218,26 @@ public class JavaVC implements Serializable {
                 System.out.println(e);
             }
         } else { //checkout branchName NEEDS FIXING: UPDATE FILES IN CURRENT WORKING DIRECTORY
-            currentBranch = branchName;
-            HEAD = branchNameToBranchHeadCommit.get(currentBranch);
             for (File f: cwd.listFiles()) {
                 if (isAllowedFile(f.getName())) {
                     f.delete();
                 }
             }
-            for (String fileHash: HEAD.getStagedFiles().values()) { //TO FIX
-
+            c = branchNameToBranchHeadCommit.get(branchName);
+            for (String fileHash: c.getStagedFiles().values()) {//TO FIX
+                File dir = new File(".javavc/blobs/" + fileHash);
+                for (File f: dir.listFiles()) {
+                    try {
+                        Files.copy(f.toPath(), new File(f.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
             }
+            currentBranch = branchName;
+            HEAD = branchNameToBranchHeadCommit.get(currentBranch);
+            stagedFiles = HEAD.getStagedFiles();
+            removedFiles = HEAD.getRemovedFiles();
         }
     }
 
@@ -238,15 +247,14 @@ public class JavaVC implements Serializable {
             System.out.println("The commit at " + commitHash + " does not exist.");
             return;
         }
-        Commit H = latestCommit;
-        while (!H.getCommitHash().equals(commitHash)) {
-            branchNameToBranchHeadCommit.put(H.getCommitBranch(), H.getPrevCommit());
-            H = H.getGlobalPrevCommit();
+        while (!latestCommit.getCommitHash().equals(commitHash)) {
+            branchNameToBranchHeadCommit.put(latestCommit.getCommitBranch(), latestCommit.getPrevCommit());
+            latestCommit = latestCommit.getGlobalPrevCommit();
         }
-        currentBranch = H.getCommitBranch();
-        stagedFiles = H.getStagedFiles();
-        removedFiles = H.getRemovedFiles();
-        HEAD = H;
+        currentBranch = latestCommit.getCommitBranch();
+        stagedFiles = latestCommit.getStagedFiles();
+        removedFiles = latestCommit.getRemovedFiles();
+        HEAD = latestCommit;
         for (File f: cwd.listFiles()) {
             if (isAllowedFile(f.getName())) {
                 f.delete();
