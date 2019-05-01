@@ -182,8 +182,6 @@ public class JavaVC implements Serializable {
     }
 
     public void checkout(String arg, String commitID, String branchName, String fileName) {
-        FileInputStream file;
-        ObjectInputStream in;
         Commit c;
         File path;
         if (arg.equals("-b")) { //checkout -b branchName
@@ -203,7 +201,7 @@ public class JavaVC implements Serializable {
                 }
                 c = Commit.deserializeCommit(commitID);
 
-            } else { c = HEAD; } //checkout -c fileName
+            } else { c = HEAD; } //checkout fileName
             try {
                 found : {
                     for (String fName : c.getStagedFiles().keySet()) {
@@ -310,17 +308,6 @@ public class JavaVC implements Serializable {
     public static void main(String[] args) {
         File file = new File(".javavc/JAVAVC.ser");
         JavaVC vc = file.exists() ? deserialize() : new JavaVC();
-//        vc.init();
-//        vc.checkout("-b", "", "test", "");
-//        vc.add(".", null);
-//        vc.commit("Adding files to test branch", false);
-//        vc.checkout("", "", "master", "");
-//        vc.add(".", null);
-//        vc.commit("Adding files to master", false);
-//        vc.add(".", null);
-//        vc.commit("Adding more files to master", false);
-//        vc.checkout("", "", "master", "");
-//        vc.reset("9d86296cc4567f8059c35a98886390445496c6d5");
         switch (args[0]) {
             case "init":
                 vc.init();
@@ -372,7 +359,7 @@ public class JavaVC implements Serializable {
                 } else if (args.length == 3) {
                     vc.checkout(args[1], "", args[2], "");
                 } else if (args.length == 4 && args[1].equals("-c") && args[3].startsWith("--")) {
-                    vc.checkout(args[1], args[2], "", args[3]);
+                    vc.checkout(args[1], args[2], "", args[3].substring(2));
                 }
         }
         vc.serializeStatus();
