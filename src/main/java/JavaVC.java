@@ -4,10 +4,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.security.MessageDigest;
-import java.util.Arrays;
 
 public class JavaVC implements Serializable {
     private static final String author = "Peter Gang";
+    private static final long serialVersionUID = 3945195870018540923L;
     private Commit HEAD;
     private Commit latestCommit;
     private String currentBranch; //Current Branch of the HEAD commit
@@ -15,6 +15,7 @@ public class JavaVC implements Serializable {
     private HashSet<String> removedFiles; //Files not present in the new staging area
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> ALLOWED_SUFFIXES;
+    private HashMap<String, Commit> mergeSplitPoints;
     public String BLOB_DIR = ".javavc/blobs";
     public static File cwd = new File(System.getProperty("user.dir"));
 
@@ -25,6 +26,7 @@ public class JavaVC implements Serializable {
         removedFiles = new HashSet<>();
         ALLOWED_SUFFIXES = new HashSet<>();
         branchNameToBranchHeadCommit = new HashMap<>();
+        mergeSplitPoints = new HashMap<>();
         ALLOWED_SUFFIXES.add(".txt");
         branchNameToBranchHeadCommit.put("master", HEAD);
     }
@@ -272,7 +274,25 @@ public class JavaVC implements Serializable {
         }
     }
 
-    private void merge() {
+    private void merge(String subBranch) {
+        String earliestAncestor;
+        found: {
+            earliestAncestor = subBranch;
+            while (mergeSplitPoints.containsKey(earliestAncestor)) {
+                Commit c = mergeSplitPoints.get(earliestAncestor);
+                earliestAncestor = c.getCommitBranch();
+                if (earliestAncestor.equals(currentBranch)) break found;
+            }
+            System.out.println("Sub branch was not found. Aborting.");
+            return;
+        }
+        Commit ancestorCommit = mergeSplitPoints.get(earliestAncestor);
+        HashMap<String, String> subBranchFiles = branchNameToBranchHeadCommit.get(subBranch).getStagedFiles();
+        HashMap<String, String> splitPointFiles = ancestorCommit.getStagedFiles();
+        HashMap<String, String> deletedOrNewfiles = new HashMap<>();
+        HashMap<String, String> currentFiles = HEAD.getStagedFiles();
+        HashMap<String, String> difference = new HashMap<>();
+        HashMap<String, String[]> conflictingFiles = new HashMap<>();
 
     }
 
