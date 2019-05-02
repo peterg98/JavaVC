@@ -291,8 +291,26 @@ public class JavaVC implements Serializable {
         HashMap<String, String> splitPointFiles = ancestorCommit.getStagedFiles();
         HashMap<String, String> deletedOrNewfiles = new HashMap<>();
         HashMap<String, String> currentFiles = HEAD.getStagedFiles();
-        HashMap<String, String> difference = new HashMap<>();
-        HashMap<String, String[]> conflictingFiles = new HashMap<>();
+        HashMap<String, String> conflictingFiles = new HashMap<>();
+        HashMap<String, String> allFiles = new HashMap<>();
+        //Get the difference of the two staging areas
+        for (String s: subBranchFiles.keySet()) {
+            if (!currentFiles.containsKey(s)) allFiles.put(s, subBranchFiles.get(s));
+        }
+        for (String s: currentFiles.keySet()) {
+            if (!subBranchFiles.containsKey(s)) allFiles.put(s, currentFiles.get(s));
+        }
+        for (String childFile: subBranchFiles.keySet()) {
+            if (subBranchFiles.get(childFile).equals(currentFiles.get(childFile))) {
+                allFiles.put(childFile, subBranchFiles.get(childFile));
+            } else {
+                if (subBranchFiles.get(childFile).equals(currentFiles.getOrDefault(childFile, null))) {
+                    allFiles.put(childFile, currentFiles.get(childFile));
+                } else {
+                    allFiles.put(childFile, subBranchFiles.get(childFile));
+                }
+            }
+        }
 
     }
 
