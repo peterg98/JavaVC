@@ -1,4 +1,1 @@
-<<<<<<<<<<<<<<<HEAD
-Second modification on master branch
->>>>>>>>>>>>>>>test
-Modified in test.txt
+Initial modification to test.txt on master branch

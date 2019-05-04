@@ -264,8 +264,13 @@ public class JavaVC implements Serializable {
             System.out.println("The commit at " + commitHash + " does not exist.");
             return;
         }
-        while (!latestCommit.getCommitHash().equals(commitHash)) {
-            branchNameToBranchHeadCommit.put(latestCommit.getCommitBranch(), latestCommit.getPrevCommit());
+        while (!latestCommit.getCommitHash().equals(commitHash)) { //Fix: Delete branch and split points when resetting
+            if (latestCommit.getPrevCommit() == null) {
+                branchNameToBranchHeadCommit.remove(latestCommit.getCommitBranch());
+                mergeSplitPoints.remove(latestCommit.getCommitBranch());
+            } else {
+                branchNameToBranchHeadCommit.put(latestCommit.getCommitBranch(), latestCommit.getPrevCommit());
+            }
             latestCommit = latestCommit.getGlobalPrevCommit();
         }
         currentBranch = latestCommit.getCommitBranch();
@@ -355,8 +360,6 @@ public class JavaVC implements Serializable {
         stagedFiles = new HashMap<>(allFiles);
         removedFiles = new HashSet<>();
         for (String s: conflictingFiles) {
-//            System.out.println(s + " " + currentFiles.get(s));
-//            System.out.println(s + " " + subBranchFiles.get(s));
             String masterFilePath = new File(".javavc/blobs/" + currentFiles.get(s)).listFiles()[0].toString();
             String subFilePath = new File(".javavc/blobs/" + subBranchFiles.get(s)).listFiles()[0].toString();
             try {
@@ -375,14 +378,13 @@ public class JavaVC implements Serializable {
                 while ((len = subBranchFile.read(buffer)) > 0) {
                     outStream.write(buffer, 0, len);
                 }
-                String fileHash = serializeAndWriteFile(result);
-                stagedFiles.put(s, fileHash);
-                Files.copy(result.toPath(), new File(".javavc/blobs/" + fileHash).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 outStream.close();
                 masterFile.close();
                 subBranchFile.close();
+                String fileHash = serializeAndWriteFile(result);
+                stagedFiles.put(s, fileHash);
             } catch (Exception e) {
-                System.out.println(e);
+                e.printStackTrace();
             }
         }
     }
