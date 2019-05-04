@@ -1,1 +1,4 @@
-Hello World
+<<<<<<<<<<<<<<<HEAD
+Second modification on master branch
+>>>>>>>>>>>>>>>test
+Modified in test.txt

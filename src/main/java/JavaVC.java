@@ -189,7 +189,10 @@ public class JavaVC implements Serializable {
         if (arg.equals("-b")) { //checkout -b branchName
             if (!branchNameToBranchHeadCommit.containsKey(branchName)) {
                 branchNameToBranchHeadCommit.put(branchName, HEAD);
+                stagedFiles = new HashMap<>();
+                removedFiles = new HashSet<>();
                 currentBranch = branchName;
+                mergeSplitPoints.put(branchName, HEAD);
             } else {
                 System.out.println("The branch at " + branchName + " already exists.");
             }
@@ -238,9 +241,21 @@ public class JavaVC implements Serializable {
             }
             currentBranch = branchName;
             HEAD = branchNameToBranchHeadCommit.get(currentBranch);
-            stagedFiles = HEAD.getStagedFiles();
-            removedFiles = HEAD.getRemovedFiles();
+            stagedFiles = new HashMap<>();
+            removedFiles = new HashSet<>();
         }
+    }
+
+    private void removeBranch(String branchName) {
+        if (branchName.equals(currentBranch)) {
+            System.out.println("Cannot delete current working branch.");
+            return;
+        } else if (!branchNameToBranchHeadCommit.containsKey(branchName)) {
+            System.out.println(branchName + " does not exist.");
+            return;
+        }
+        branchNameToBranchHeadCommit.remove(branchName);
+        mergeSplitPoints.remove(branchName);
     }
 
     private void reset(String commitHash) {
@@ -275,13 +290,18 @@ public class JavaVC implements Serializable {
     }
 
     private void merge(String subBranch) {
+        if (!branchNameToBranchHeadCommit.containsKey(subBranch)) {
+            System.out.println("Branch not found. Aborting.");
+        }
         String earliestAncestor;
         found: {
             earliestAncestor = subBranch;
-            while (mergeSplitPoints.containsKey(earliestAncestor)) {
-                Commit c = mergeSplitPoints.get(earliestAncestor);
+            Commit c = mergeSplitPoints.get(earliestAncestor);
+            if (c.getCommitBranch().equals(currentBranch)) break found;
+            while (!c.getCommitBranch().equals(currentBranch)) {
                 earliestAncestor = c.getCommitBranch();
-                if (earliestAncestor.equals(currentBranch)) break found;
+                c = mergeSplitPoints.get(earliestAncestor);
+                if (c.getCommitBranch().equals(currentBranch)) break found;
             }
             System.out.println("Sub branch was not found. Aborting.");
             return;
@@ -289,29 +309,82 @@ public class JavaVC implements Serializable {
         Commit ancestorCommit = mergeSplitPoints.get(earliestAncestor);
         HashMap<String, String> subBranchFiles = branchNameToBranchHeadCommit.get(subBranch).getStagedFiles();
         HashMap<String, String> splitPointFiles = ancestorCommit.getStagedFiles();
-        HashMap<String, String> deletedOrNewfiles = new HashMap<>();
         HashMap<String, String> currentFiles = HEAD.getStagedFiles();
-        HashMap<String, String> conflictingFiles = new HashMap<>();
+        HashSet<String> conflictingFiles = new HashSet<>();
         HashMap<String, String> allFiles = new HashMap<>();
         //Get the difference of the two staging areas
+        //If file only exists in one branch, it is not necessary to check the split point, because no files would be in conflict
         for (String s: subBranchFiles.keySet()) {
             if (!currentFiles.containsKey(s)) allFiles.put(s, subBranchFiles.get(s));
         }
         for (String s: currentFiles.keySet()) {
             if (!subBranchFiles.containsKey(s)) allFiles.put(s, currentFiles.get(s));
         }
+        //Get files present in both branches and determine conflicting and non-conflicting files
         for (String childFile: subBranchFiles.keySet()) {
             if (subBranchFiles.get(childFile).equals(currentFiles.get(childFile))) {
+                //Files in the two branches are identical: No need to check whether the file is in the split point
                 allFiles.put(childFile, subBranchFiles.get(childFile));
             } else {
-                if (subBranchFiles.get(childFile).equals(currentFiles.getOrDefault(childFile, null))) {
+                //If sub branch file is identical to the one in the split point, incorporate the change from the
+                //main branch and vice versa
+                if (subBranchFiles.containsKey(childFile) && subBranchFiles.get(childFile).equals(splitPointFiles.get(childFile))) {
                     allFiles.put(childFile, currentFiles.get(childFile));
-                } else {
+                } else if (currentFiles.containsKey(childFile) && currentFiles.get(childFile).equals(splitPointFiles.get(childFile))) {
                     allFiles.put(childFile, subBranchFiles.get(childFile));
+                } else if (subBranchFiles.containsKey(childFile) && currentFiles.containsKey(childFile) && !subBranchFiles.get(childFile).equals(splitPointFiles.get(childFile)) &&
+                        !currentFiles.get(childFile).equals(splitPointFiles.get(childFile)) && !subBranchFiles.get(childFile).equals(currentFiles.get(childFile))){
+                    //Files are different, and both are different from the split point.
+                    conflictingFiles.add(childFile);
                 }
             }
         }
-
+        for (File f: cwd.listFiles()) {
+            if (isAllowedFile(f.getName())) {
+                f.delete();
+            }
+        }
+        for (String s: allFiles.keySet()) {
+            File f = new File(".javavc/blobs/" + allFiles.get(s)).listFiles()[0];
+            try {
+                Files.copy(f.toPath(), new File(s).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }
+        stagedFiles = new HashMap<>(allFiles);
+        removedFiles = new HashSet<>();
+        for (String s: conflictingFiles) {
+//            System.out.println(s + " " + currentFiles.get(s));
+//            System.out.println(s + " " + subBranchFiles.get(s));
+            String masterFilePath = new File(".javavc/blobs/" + currentFiles.get(s)).listFiles()[0].toString();
+            String subFilePath = new File(".javavc/blobs/" + subBranchFiles.get(s)).listFiles()[0].toString();
+            try {
+                File result = new File(s);
+                FileOutputStream outStream = new FileOutputStream(result);
+                FileInputStream masterFile = new FileInputStream(new File(masterFilePath));
+                FileInputStream subBranchFile = new FileInputStream(new File(subFilePath));
+                outStream.write("<<<<<<<<<<<<<<<HEAD\n".getBytes());
+                int len;
+                byte[] buffer = new byte[1024];
+                while ((len = masterFile.read(buffer)) > 0) {
+                    outStream.write(buffer, 0, len);
+                }
+                outStream.write("\n".getBytes(), 0, 1);
+                outStream.write((">>>>>>>>>>>>>>>" + subBranch + "\n").getBytes());
+                while ((len = subBranchFile.read(buffer)) > 0) {
+                    outStream.write(buffer, 0, len);
+                }
+                String fileHash = serializeAndWriteFile(result);
+                stagedFiles.put(s, fileHash);
+                Files.copy(result.toPath(), new File(".javavc/blobs/" + fileHash).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                outStream.close();
+                masterFile.close();
+                subBranchFile.close();
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }
     }
 
     public static String convertToHex(byte[] bytearray, boolean isCommit) {
@@ -418,6 +491,17 @@ public class JavaVC implements Serializable {
                 } else if (args.length == 4 && args[1].equals("-c") && args[3].startsWith("--")) {
                     vc.checkout(args[1], args[2], "", args[3].substring(2));
                 }
+                break;
+            case "branch":
+                if (args.length != 3) System.out.println("branch takes two arguments: -d branchName");
+                else vc.removeBranch(args[2]);
+                break;
+            case "merge":
+                if (args.length < 2) System.out.println("merge requires one argument branch");
+                else if (args.length == 2) {
+                    vc.merge(args[1]);
+                }
+                break;
         }
         vc.serializeStatus();
     }
