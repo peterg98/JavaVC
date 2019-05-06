@@ -40,6 +40,7 @@ public class JavaVC implements Serializable {
             this.currentBranch = "master";
             branchNameToBranchHeadCommit.put("master", HEAD);
             this.commit("Initial commit", true);
+            System.out.println("initialized new empty .javavc repository");
         } else {
             System.out.println("A javavc folder already exists inside this repository");
         }
@@ -192,6 +193,7 @@ public class JavaVC implements Serializable {
                 removedFiles = new HashSet<>();
                 currentBranch = branchName;
                 mergeSplitPoints.put(branchName, HEAD);
+                System.out.println("Switched to a new branch " + branchName);
             } else {
                 System.out.println("The branch at " + branchName + " already exists.");
             }
@@ -221,7 +223,7 @@ public class JavaVC implements Serializable {
             } catch (Exception e) {
                 System.out.println(e);
             }
-        } else { //checkout branchName NEEDS FIXING: UPDATE FILES IN CURRENT WORKING DIRECTORY
+        } else { //checkout branchName
             for (File f: cwd.listFiles()) {
                 if (isAllowedFile(f.getName())) {
                     f.delete();
@@ -242,6 +244,7 @@ public class JavaVC implements Serializable {
             HEAD = branchNameToBranchHeadCommit.get(currentBranch);
             stagedFiles = new HashMap<>();
             removedFiles = new HashSet<>();
+            System.out.println("Switched to branch " + branchName);
         }
     }
 
@@ -292,6 +295,7 @@ public class JavaVC implements Serializable {
                 }
             }
         }
+        System.out.println("Successfully reverted to commit " + commitHash);
     }
 
     private void merge(String subBranch) {
@@ -387,6 +391,7 @@ public class JavaVC implements Serializable {
                 e.printStackTrace();
             }
         }
+        System.out.println("Merged with branch " + subBranch);
     }
 
     public static String convertToHex(byte[] bytearray, boolean isCommit) {
