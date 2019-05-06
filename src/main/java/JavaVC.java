@@ -16,7 +16,6 @@ public class JavaVC implements Serializable {
     private HashMap<String, Commit> branchNameToBranchHeadCommit;
     private HashSet<String> ALLOWED_SUFFIXES;
     private HashMap<String, Commit> mergeSplitPoints;
-    public String BLOB_DIR = ".javavc/blobs";
     public static File cwd = new File(System.getProperty("user.dir"));
 
     public JavaVC() {
@@ -67,7 +66,7 @@ public class JavaVC implements Serializable {
     }
 
     public String serializeAndWriteFile(File f) {
-        File blobDir = new File(BLOB_DIR);
+        File blobDir = new File(".javavc/blobs");
         if (!blobDir.exists()) {
             blobDir.mkdirs();
         }
@@ -264,8 +263,9 @@ public class JavaVC implements Serializable {
             System.out.println("The commit at " + commitHash + " does not exist.");
             return;
         }
-        while (!latestCommit.getCommitHash().equals(commitHash)) { //Fix: Delete branch and split points when resetting
-            if (latestCommit.getPrevCommit() == null) {
+        while (!latestCommit.getCommitHash().equals(commitHash)) {
+            //When the previous commit's branch and the current branch is different, it is the end of a branch: delete it and its split point
+            if (latestCommit.getPrevCommit() != null && latestCommit.getPrevCommit().getCommitBranch().equals(latestCommit.getCommitBranch())) {
                 branchNameToBranchHeadCommit.remove(latestCommit.getCommitBranch());
                 mergeSplitPoints.remove(latestCommit.getCommitBranch());
             } else {

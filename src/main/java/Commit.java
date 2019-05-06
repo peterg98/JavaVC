@@ -11,7 +11,6 @@ import java.security.MessageDigest;
 public class Commit implements Serializable {
     //Must provide a UID so that serializations can use different class definitions
     private static final long serialVersionUID = 8474892334572341244L;
-    private String commitHash;
     private Date date;
     private SimpleDateFormat format;
     private String formattedDate;
@@ -22,7 +21,6 @@ public class Commit implements Serializable {
     private String branch;
     private HashMap<String, String> stagedFiles;
     private HashSet<String> removedFiles;
-    private HashSet<String> allFiles;
     private String hash;
     private final static String COMMIT_LOCATION = ".javavc/commits";
 
