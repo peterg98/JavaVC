@@ -265,7 +265,7 @@ public class JavaVC implements Serializable {
         }
         while (!latestCommit.getCommitHash().equals(commitHash)) {
             //When the previous commit's branch and the current branch is different, it is the end of a branch: delete it and its split point
-            if (latestCommit.getPrevCommit() != null && latestCommit.getPrevCommit().getCommitBranch().equals(latestCommit.getCommitBranch())) {
+            if (latestCommit.getPrevCommit() != null && !latestCommit.getPrevCommit().getCommitBranch().equals(latestCommit.getCommitBranch())) {
                 branchNameToBranchHeadCommit.remove(latestCommit.getCommitBranch());
                 mergeSplitPoints.remove(latestCommit.getCommitBranch());
             } else {
