@@ -266,6 +266,11 @@ public class JavaVC implements Serializable {
             System.out.println("The commit at " + commitHash + " does not exist.");
             return;
         }
+        Commit c = Commit.deserializeCommit(commitHash);
+        if (!branchNameToBranchHeadCommit.containsKey(c.getCommitBranch())) {
+            System.out.println("Cannot reset to this commit. Branch " + c.getCommitBranch() + " does not exist. Aborting.");
+            return;
+        }
         while (!latestCommit.getCommitHash().equals(commitHash)) {
             //When the previous commit's branch and the current branch is different, it is the end of a branch: delete it and its split point
             if (latestCommit.getPrevCommit() != null && !latestCommit.getPrevCommit().getCommitBranch().equals(latestCommit.getCommitBranch())) {
