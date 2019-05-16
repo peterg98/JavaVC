@@ -66,6 +66,7 @@ public class JavaVC implements Serializable {
 
     }
 
+    /* Generate hash for the blob and store the object under blobs*/
     public String serializeAndWriteFile(File f) {
         File blobDir = new File(".javavc/blobs");
         if (!blobDir.exists()) {
@@ -107,6 +108,7 @@ public class JavaVC implements Serializable {
         }
     }
 
+    /* A simple check to test if objects are in the allowed files we specified (in this case, only .txt)*/
     private boolean isAllowedFile(String fileName) {
         for (String suffix: ALLOWED_SUFFIXES) {
             if (!fileName.endsWith(suffix)) return false;
@@ -415,6 +417,7 @@ public class JavaVC implements Serializable {
         return hash.toString();
     }
 
+    /* Serialize this JavaVC class to preserve its state*/
     public void serializeStatus() {
         File dir = new File(".javavc");
         if (!dir.exists()) {
@@ -432,6 +435,7 @@ public class JavaVC implements Serializable {
         }
     }
 
+    //Deserialize this class every time it is used
     public static JavaVC deserialize() {
         String pathToSerial = ".javavc/JAVAVC.ser";
         try {
