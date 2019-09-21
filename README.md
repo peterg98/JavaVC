@@ -36,7 +36,7 @@ except for .txt files. It utilizes Java's built-in serialization methods to pres
 `merge [branch]` - Merges the changes from the sub branch to this branch. If there are conflicts, the content from both of the branches
 will be shown on the conflicting file.
 
-####### Example usage:
+###### Example usage:
 
 `java JavaVC init`
 *Create a .txt file in the working directory*
