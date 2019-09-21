@@ -40,3 +40,6 @@ will be shown on the conflicting file.
 
 `java JavaVC init`
 *Create a .txt file in the working directory*
+`java JavaVC add .`
+`java JavaVC commit -m "My first commit"`
+`java JavaVC log`
